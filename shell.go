@@ -18,6 +18,8 @@ func shell() {
 	defer client.Close()
 	var iter *genai.GenerateContentResponseIterator
 	scanner := bufio.NewScanner(os.Stdin)
+	cs := model.StartChat()
+	cs.History = []*genai.Content{}
 
 	// Loop
 	for {
@@ -29,7 +31,9 @@ func shell() {
 		}
 
 		// Process
-		iter = model.GenerateContentStream(ctx, genai.Text(input))
+		iter = cs.SendMessageStream(ctx, genai.Text(input))
+
+		parts := []genai.Part{}
 
 		// Print
 		fmt.Println()
@@ -44,7 +48,18 @@ func shell() {
 
 			// print resp
 			fmt.Printf("%s", resp.Candidates[0].Content.Parts[0])
+			parts = append(parts, resp.Candidates[0].Content.Parts[0])
 		}
 		fmt.Println()
+
+		// Add history
+		cs.History = append(cs.History, &genai.Content{
+			Parts: []genai.Part{genai.Text(input)},
+			Role:  "user",
+		})
+		cs.History = append(cs.History, &genai.Content{
+			Parts: parts,
+			Role:  "model",
+		})
 	}
 }
