@@ -5,84 +5,36 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
-func suffixToType(suffix string) (imgType string) {
-	if suffix == "jpg" || suffix == "jpeg" || suffix == "JPG" {
-		return "jpeg"
-	} else if suffix == "png" || suffix == "PNG" {
-		return "png"
-	} else if suffix == "gif" {
-		return "gif"
-	}
-	return ""
-}
-
-func addrToSuffix(addr string) (suffix string) {
-	idx := strings.LastIndex(addr, ".")
-	if idx == -1 {
-		return ""
-	}
-	return addr[idx+1:]
-}
-
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Type gemini 'Question' to ask questions")
-		return
-	}
-
-	hasImage := os.Args[len(os.Args)-1] == "-i" || os.Args[len(os.Args)-1] == "--image"
-
-	ctx := context.Background()
-
+func initModel(ctx context.Context) (client *genai.Client, model *genai.GenerativeModel) {
 	// Access your API key as an environment variable (see "Set up your API key" above)
 	client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
+	//defer client.Close()
 
-	model := client.GenerativeModel("gemini-1.5-flash")
+	model = client.GenerativeModel("gemini-1.5-flash")
+	return client, model
+}
 
-	var iter *genai.GenerateContentResponseIterator
+func main() {
+	// Help
+	if os.Args[len(os.Args)-1] == "-h" || os.Args[len(os.Args)-1] == "--help" {
+		fmt.Println("Gemini CLI by Hanson Zhang")
+		fmt.Println("	Run \"gemini\" to spawn a conversation shell.")
+		fmt.Println("	Run \"gemini '<YOUR QUESTION>'\" to ask gemini.")
+		fmt.Println("	Run \"gemini '<YOUR QUESTION>' '<IMG PATH>' ... -i\" to ask gemini with images. You can put multiple images here.")
+		return
+	}
 
-	if !hasImage {
-		iter = model.GenerateContentStream(ctx, genai.Text(os.Args[1]))
+	if len(os.Args) < 2 {
+		shell()
 	} else {
-		prompt := []genai.Part{}
-		for idx, addr := range os.Args {
-			if idx > 1 && idx < len(os.Args)-1 {
-				imgData, err := os.ReadFile(addr)
-				if err != nil {
-					log.Fatal(err)
-				}
-				prompt = append(prompt, genai.ImageData(suffixToType(addrToSuffix(addr)), imgData))
-			}
-		}
-		prompt = append(prompt, genai.Text(os.Args[1]))
-		iter = model.GenerateContentStream(ctx, prompt...)
+		oneTime(os.Args)
 	}
-
-	fmt.Println()
-
-	for {
-		resp, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// print resp
-		fmt.Printf("%s", resp.Candidates[0].Content.Parts[0])
-	}
-
-	fmt.Println()
 }
