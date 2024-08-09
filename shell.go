@@ -47,7 +47,11 @@ func shell() {
 			}
 
 			// print resp
-			fmt.Printf("%s", resp.Candidates[0].Content.Parts[0])
+			_, err = fmt.Printf("%s", resp.Candidates[0].Content.Parts[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			parts = append(parts, resp.Candidates[0].Content.Parts[0])
 		}
 		fmt.Println()

@@ -1,39 +1,28 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"os"
-
-	"github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/option"
 )
 
-func initModel(ctx context.Context) (client *genai.Client, model *genai.GenerativeModel) {
-	// Access your API key as an environment variable (see "Set up your API key" above)
-	client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
-	if err != nil {
-		log.Fatal(err)
-	}
-	//defer client.Close()
-
-	model = client.GenerativeModel("gemini-1.5-flash")
-	return client, model
-}
-
 func main() {
-	// Help
-	if os.Args[len(os.Args)-1] == "-h" || os.Args[len(os.Args)-1] == "--help" {
+	// Options
+	if len(os.Args) < 2 {
+		shell()
+	} else if os.Args[len(os.Args)-1] == "-h" || os.Args[len(os.Args)-1] == "--help" {
 		fmt.Println("Gemini CLI by Hanson Zhang")
 		fmt.Println("	Run \"gemini\" to spawn a conversation shell.")
 		fmt.Println("	Run \"gemini '<YOUR QUESTION>'\" to ask gemini.")
 		fmt.Println("	Run \"gemini '<YOUR QUESTION>' '<IMG PATH>' ... -i\" to ask gemini with images. You can put multiple images here.")
+		fmt.Println()
+		fmt.Println("	Run \"gemini -m\" or \"gemini --model\" to get all available models.")
+		fmt.Println("	Run \"gemini -m '<MODEL NAME>'\" or \"gemini --model '<MODEL NAME>'\" to set model.")
 		return
-	}
-
-	if len(os.Args) < 2 {
-		shell()
+	} else if os.Args[1] == "-m" || os.Args[1] == "--model" {
+		if len(os.Args) > 2 {
+			setModel(os.Args[2])
+		}
+		printAvailableModels()
 	} else {
 		oneTime(os.Args)
 	}

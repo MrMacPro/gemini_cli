@@ -68,7 +68,10 @@ func oneTime(args []string) {
 		}
 
 		// print resp
-		fmt.Printf("%s", resp.Candidates[0].Content.Parts[0])
+		_, err = fmt.Printf("%s", resp.Candidates[0].Content.Parts[0])
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	fmt.Println()
 }
