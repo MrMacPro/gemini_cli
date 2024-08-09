@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -42,8 +41,8 @@ func getModel() (modelName string) {
 
 	// Check available
 	if !modelAvailable(currentModel) {
-		fmt.Println("Model not available. Please set a new model.")
-		log.Fatal(errors.New("current model not available"))
+		currentModel = "gemini-1.5-flash"
+		setModel(currentModel)
 	}
 
 	return currentModel
